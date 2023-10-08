@@ -23,8 +23,9 @@ const schema = {
   },
 };
 
-defineHttpFunc(
-  "getPerson",
+export default defineHttpFunc(
+  "GET",
+  "people/{id}",
   schema,
   async (request) => {
     const person = {
@@ -37,8 +38,6 @@ defineHttpFunc(
     return { body: { person } };
   },
   {
-    methods: ["GET"],
-    route: "people/{id}",
     authLevel: "anonymous",
   }
 );

@@ -5,6 +5,7 @@ import {
   type HttpRequest,
   type InvocationContext,
   type HttpTriggerOptions,
+  type HttpMethod,
 } from "@azure/functions";
 import { z, type ZodSchema } from "zod";
 
@@ -94,17 +95,21 @@ export const defineHttpFunc = <
   ReqQ extends ZodSchema,
   ResB extends ZodSchema
 >(
-  name: string,
+  method: HttpMethod,
+  route: string,
   schema: HttpSchema<ReqP, ReqB, ReqQ, ResB>,
   func: HttpFunc<ReqP, ReqB, ReqQ, ResB>,
-  options?: HttpTriggerOptions
+  options?: Omit<HttpTriggerOptions, "route" | "methods">
 ) => {
-  app.http(name, {
+  app.http(route, {
     ...options,
+    route,
     handler: execute({ schema, func }),
   });
 
   return {
+    method,
+    route,
     schema,
     func,
   };

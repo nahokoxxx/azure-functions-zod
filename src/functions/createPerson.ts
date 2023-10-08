@@ -17,8 +17,9 @@ const schema = {
   },
 };
 
-defineHttpFunc(
-  "createPerson",
+export default defineHttpFunc(
+  "POST",
+  "people",
   schema,
   async (request, context) => {
     const { name } = request.query;
@@ -31,8 +32,6 @@ defineHttpFunc(
     return { body: `${name} Registered!` };
   },
   {
-    route: "people",
-    methods: ["POST"],
     authLevel: "anonymous",
   }
 );
