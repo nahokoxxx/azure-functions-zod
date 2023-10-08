@@ -1,9 +1,5 @@
-import {
-  app,
-  type InvocationContext,
-  type HttpResponseInit,
-} from "@azure/functions";
-import { handle, type HttpFuncRequest } from "../handlers/http";
+import { app } from "@azure/functions";
+import { handle, type HttpFunc } from "../handlers/http";
 import { z } from "zod";
 
 const schema = {
@@ -20,10 +16,10 @@ const schema = {
   }),
 };
 
-export async function http(
-  request: HttpFuncRequest<typeof schema.body, typeof schema.query>,
-  context: InvocationContext
-): Promise<HttpResponseInit> {
+const createPerson: HttpFunc<any, typeof schema.body, typeof schema.query> = async (
+  request,
+  context
+) => {
   const { name } = request.query;
   const { age, gender } = request.body;
 
@@ -32,10 +28,11 @@ export async function http(
   context.info("name", gender);
 
   return { body: `${name} Registered!` };
-}
+};
 
-app.http("http", {
+app.http("createPerson", {
   methods: ["POST"],
+  route: "people",
   authLevel: "anonymous",
-  handler: handle(http, schema),
+  handler: handle(createPerson, schema),
 });
