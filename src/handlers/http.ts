@@ -21,6 +21,22 @@ export type HttpFuncResponse<R extends ZodSchema = any> = Omit<
   "body"
 > & { body: z.infer<R> };
 
+export type HttpSchema<
+  ReqP extends ZodSchema,
+  ReqB extends ZodSchema,
+  ReqQ extends ZodSchema,
+  ResB extends ZodSchema
+> = {
+  req?: {
+    params?: ReqP;
+    body?: ReqB;
+    query?: ReqQ;
+  };
+  res?: {
+    body?: ResB;
+  };
+};
+
 export type HttpFunc<
   P extends ZodSchema = any,
   B extends ZodSchema = any,
@@ -33,39 +49,54 @@ export type HttpFunc<
 
 export const handle =
   <
-    P extends ZodSchema,
-    B extends ZodSchema,
-    Q extends ZodSchema,
-    R extends ZodSchema
-  >(
-    func: HttpFunc<P, B, Q, R>,
-    schema?: {
-      params?: P;
-      body?: B;
-      query?: Q;
-      response?: R;
-    }
-  ): HttpHandler =>
+    ReqP extends ZodSchema,
+    ReqB extends ZodSchema,
+    ReqQ extends ZodSchema,
+    ResB extends ZodSchema
+  >({
+    func,
+    schema,
+  }: {
+    func: HttpFunc<ReqP, ReqB, ReqQ, ResB>;
+    schema?: HttpSchema<ReqP, ReqB, ReqQ, ResB>;
+  }): HttpHandler =>
   async (request, context) => {
-    const persedParams = schema?.params?.parse(request.params);
-    const parsedBody = schema?.body?.parse(await request.json());
-    const parsedQuery = schema?.query?.parse(Object.fromEntries(request.query));
+    const parsedReqParams = schema?.req?.params?.parse(request.params);
+    const parsedReqBody = schema?.req?.body?.parse(await request.json());
+    const parsedReqQuery = schema?.req?.query?.parse(
+      Object.fromEntries(request.query)
+    );
 
     const result = await func(
       {
         ...request,
-        params: persedParams,
-        body: parsedBody,
-        query: parsedQuery,
+        params: parsedReqParams,
+        body: parsedReqBody,
+        query: parsedReqQuery,
       },
       context
     );
 
-    const persedBody = schema?.response
-      ? schema.response.parse(result.body)
+    const parsedResBody = schema?.res?.body
+      ? schema.res.body.parse(result.body)
       : result.body;
 
     // TODO: handle status code
 
-    return { ...result, body: JSON.stringify(persedBody) };
+    return { ...result, body: JSON.stringify(parsedResBody) };
   };
+
+export const defineHttpFunc = <
+  ReqP extends ZodSchema,
+  ReqB extends ZodSchema,
+  ReqQ extends ZodSchema,
+  ResB extends ZodSchema
+>(
+  schema: HttpSchema<ReqP, ReqB, ReqQ, ResB>,
+  httpFunc: HttpFunc<ReqP, ReqB, ReqQ, ResB>
+) => {
+  return {
+    schema,
+    func: httpFunc,
+  };
+};
