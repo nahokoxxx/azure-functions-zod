@@ -1,5 +1,4 @@
-import { app } from "@azure/functions";
-import { defineHttpFunc, handle } from "../handlers/http";
+import { defineHttpFunc } from "../utils/httpFunc";
 import { z } from "zod";
 
 const schema = {
@@ -24,20 +23,22 @@ const schema = {
   },
 };
 
-const getPerson = defineHttpFunc(schema, async (request) => {
-  const person = {
-    id: request.params.id,
-    name: "nahoko",
-    age: 31,
-    gender: "female" as const,
-  };
+defineHttpFunc(
+  "getPerson",
+  schema,
+  async (request) => {
+    const person = {
+      id: request.params.id,
+      name: "nahoko",
+      age: 31,
+      gender: "female" as const,
+    };
 
-  return { body: { person } };
-});
-
-app.http("getPerson", {
-  methods: ["GET"],
-  route: "people/{id}",
-  authLevel: "anonymous",
-  handler: handle(getPerson),
-});
+    return { body: { person } };
+  },
+  {
+    methods: ["GET"],
+    route: "people/{id}",
+    authLevel: "anonymous",
+  }
+);

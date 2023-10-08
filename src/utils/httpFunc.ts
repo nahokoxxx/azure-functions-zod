@@ -1,8 +1,10 @@
 import {
+  app,
   type HttpResponseInit,
   type HttpHandler,
   type HttpRequest,
   type InvocationContext,
+  type HttpTriggerOptions,
 } from "@azure/functions";
 import { z, type ZodSchema } from "zod";
 
@@ -47,7 +49,7 @@ export type HttpFunc<
   context: InvocationContext
 ) => Promise<HttpFuncResponse<R>>;
 
-export const handle =
+const execute =
   <
     ReqP extends ZodSchema,
     ReqB extends ZodSchema,
@@ -92,11 +94,18 @@ export const defineHttpFunc = <
   ReqQ extends ZodSchema,
   ResB extends ZodSchema
 >(
+  name: string,
   schema: HttpSchema<ReqP, ReqB, ReqQ, ResB>,
-  httpFunc: HttpFunc<ReqP, ReqB, ReqQ, ResB>
+  func: HttpFunc<ReqP, ReqB, ReqQ, ResB>,
+  options?: HttpTriggerOptions
 ) => {
+  app.http(name, {
+    ...options,
+    handler: execute({ schema, func }),
+  });
+
   return {
     schema,
-    func: httpFunc,
+    func,
   };
 };
